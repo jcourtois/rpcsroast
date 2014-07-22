@@ -1,4 +1,4 @@
 ansible
 =========
 
-A repository for RPCS specific ansible tests using the CloudCafe engine.
+A repository for RPCS specific container tests using the CloudCafe engine.
