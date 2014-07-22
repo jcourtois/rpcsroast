@@ -1,4 +1,4 @@
 rpcsroast
 =========
 
-A repository for RPCS specific CloudCafe tests / validation
+A repository for RPCS specific tests using the CloudCafe engine.
