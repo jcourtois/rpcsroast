@@ -34,7 +34,7 @@ class ScaleInfrastructureTest(ScaleTestFixture):
     @tags(type='positive')
     def test_scale_infrastructure_up(self):
         for burn_in in self.burn_ins:
-            burn_in.run()
+            burn_in.start()
         self.sentinel.set()
         # while pinging rabbit and tracking success-to-failure ratio:
 
@@ -49,7 +49,7 @@ class ScaleInfrastructureTest(ScaleTestFixture):
         #   -validate message sent
         #   -validate message queued
         #   -validate message consumed
-        
+
     @tags(type='positive')
     def test_scale_infrastructure_down(self):
         pass
