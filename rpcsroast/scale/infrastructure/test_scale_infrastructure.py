@@ -33,7 +33,9 @@ class ScaleInfrastructureTest(ScaleTestFixture):
 
     @tags(type='positive')
     def test_scale_infrastructure_up(self):
-
+        for burn_in in self.burn_ins:
+            burn_in.run()
+        self.sentinel.set()
         # while pinging rabbit and tracking success-to-failure ratio:
 
         #   find host
@@ -47,9 +49,10 @@ class ScaleInfrastructureTest(ScaleTestFixture):
         #   -validate message sent
         #   -validate message queued
         #   -validate message consumed
-
+        
     @tags(type='positive')
     def test_scale_infrastructure_down(self):
+        pass
         # while pinging rabbit and tracking success-to-failure ratio:
 
         # select new rabbitmq container from cluster
