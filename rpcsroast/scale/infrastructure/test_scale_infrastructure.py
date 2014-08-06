@@ -6,6 +6,8 @@ from cafe.drivers.unittest.decorators import tags
 
 # note that we want test commands here that will return non-zero exit codes
 # if anything fails.
+from rpcsroast.scale.infrastructure.rabbit.rabbit_health_check import \
+    RabbitSimultaneousBurnIn
 
 KEYSTONE_SMOKE_TESTS_CMD = "curl -f http://localhost:5000/v2.0"
 NEUTRON_SMOKE_TESTS_CMD = "echo hey neutron"
@@ -45,10 +47,9 @@ class ScaleInfrastructureTest(ScaleTestFixture):
                                cls.api_successes,
                                cls.api_failures,
                                cls.sentinel),
-            SimultaneousBurnIn(RABBIT_SMOKE_TESTS_CMD,
-                               cls.api_successes,
-                               cls.api_failures,
-                               cls.sentinel),
+            RabbitSimultaneousBurnIn(cls.api_successes,
+                                     cls.api_failures,
+                                     cls.sentinel),
             SimultaneousBurnIn(GALERA_SMOKE_TESTS_CMD,
                                cls.api_successes,
                                cls.api_failures,
