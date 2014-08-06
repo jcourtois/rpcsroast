@@ -7,13 +7,13 @@ from cafe.drivers.unittest.decorators import tags
 # note that we want test commands here that will return non-zero exit codes
 # if anything fails.
 
-KEYSTONE_SMOKE_TESTS_CMD = "echo hey7"
-NEUTRON_SMOKE_TESTS_CMD = "echo 5325"
-GLANCE_SMOKE_TESTS_CMD = "echo hey1"
-NOVA_SMOKE_TESTS_CMD = "cafe-runner compute devstack -f -t \"type=smoke\""
-HEAT_SMOKE_TESTS_CMD = "echo 6t53y7"
-RABBIT_SMOKE_TESTS_CMD = "echo hey2"
-GALERA_SMOKE_TESTS_CMD = "echo hey3"
+KEYSTONE_SMOKE_TESTS_CMD = "curl http://localhost:5000/v2.0"
+NEUTRON_SMOKE_TESTS_CMD = "echo hey neutron"
+GLANCE_SMOKE_TESTS_CMD = "echo hey glance"
+NOVA_SMOKE_TESTS_CMD = "curl http://localhost:8774/v2.0"
+HEAT_SMOKE_TESTS_CMD = "echo hey heat"
+RABBIT_SMOKE_TESTS_CMD = "echo hey rabbit"
+GALERA_SMOKE_TESTS_CMD = "echo hey galera"
 
 
 class ScaleInfrastructureTest(ScaleTestFixture):
@@ -35,20 +35,21 @@ class ScaleInfrastructureTest(ScaleTestFixture):
     def test_scale_infrastructure_up(self):
         for burn_in in self.burn_ins:
             burn_in.start()
-        self.sentinel.set()
-        # while pinging rabbit and tracking success-to-failure ratio:
 
         #   find host
         #   write host file
         #   run rabbit playbook with new host file
         #   add new rabbitmq container ip to load balancer
 
+        # ask load balancer about service on IP
         #   validate new rabbit server:
         #   -create message on message queue
         #   -submit
         #   -validate message sent
         #   -validate message queued
         #   -validate message consumed
+        self.sentinel.set()
+
 
     @tags(type='positive')
     def test_scale_infrastructure_down(self):
