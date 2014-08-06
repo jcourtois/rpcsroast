@@ -1,6 +1,6 @@
+import random
 import kombu
 import time
-from random import uniform
 from rpcsroast.scale.fixtures import SimultaneousBurnIn
 
 
@@ -11,17 +11,20 @@ class RabbitSimultaneousBurnIn(SimultaneousBurnIn):
 
     def run(self):
         connection = kombu.Connection(hostname='localhost', password='stack')
-        queue = connection.SimpleQueue('test_queue')
         while not self.sentinel_event.is_set():
-            time.sleep(0.1)
-            messages = [uniform(0, 1), uniform(0, 1), uniform(0, 1)]
+            messages = [str(random.uniform(0, 1)),
+                        str(random.uniform(0, 1)),
+                        str(random.uniform(0, 1))]
             received_messages = set()
+            with connection.SimpleBuffer('test_queue3') as queue:
+                for message in messages:
+                    queue.put(message)
+                    time.sleep(0.1)  # to give rabbit a break
 
-            for message in messages:
-                queue.put(message)
+                for _ in range(queue.qsize()):
+                    received_messages.add(queue.get(timeout=1).body)
 
-            for _ in range(queue.qsize()):
-                received_messages.add(queue.get(timeout=1))
+            print "{} ?= {}".format(str(messages), str(received_messages))
 
             if all(message in received_messages for message in messages):
                 with self.successes.get_lock():
@@ -30,5 +33,4 @@ class RabbitSimultaneousBurnIn(SimultaneousBurnIn):
             else:
                 with self.failures.get_lock():
                     self.failures.value += 1
-                print "Rabbit failure!!" \
-                      ""
+                print "Rabbit failure!!"
