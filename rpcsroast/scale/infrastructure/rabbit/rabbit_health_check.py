@@ -16,6 +16,7 @@ class RabbitSimultaneousBurnIn(SimultaneousBurnIn):
                         str(random.uniform(0, 1)),
                         str(random.uniform(0, 1))]
             received_messages = set()
+            
             with connection.SimpleBuffer('test_queue3') as queue:
                 for message in messages:
                     queue.put(message)
@@ -26,11 +27,12 @@ class RabbitSimultaneousBurnIn(SimultaneousBurnIn):
 
             print "{} ?= {}".format(str(messages), str(received_messages))
 
-            if all(message in received_messages for message in messages):
-                with self.successes.get_lock():
-                    self.successes.value += 1
-                    print "Rabbit success!!"
-            else:
-                with self.failures.get_lock():
-                    self.failures.value += 1
-                print "Rabbit failure!!"
+            for message in messages:
+                if message in received_messages:
+                    with self.successes.get_lock():
+                        self.successes.value += 1
+                        print "Rabbit success!!"
+                else:
+                    with self.failures.get_lock():
+                        self.failures.value += 1
+                        print "Rabbit failure!!"
