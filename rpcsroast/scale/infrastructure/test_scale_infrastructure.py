@@ -11,16 +11,16 @@ from rpcsroast.scale.infrastructure.rabbit.rabbit_health_check import \
     RabbitSimultaneousBurnIn
 
 #use ab instead of curl; it's for load testing
+curl_command = "curl -f {} &>/dev/null"
 
 smoke_test = {
-    "keystone-api": "curl -f http://localhost:5000/",
-    "glance-api": "curl -f http://localhost:9292/",
-    "cinder-api": "curl -f http://localhost:8776/",
-    "nova-api": "curl -f http://localhost:8774/",
-    "heat-api": "curl -f http://localhost:8004/",
-    "heat-api-cloudwatch": "curl -f http://localhost:8003/",
-    "heat-api-cfn": "curl -f http://localhost:8000/",
-    "ec2-compat": "curl -f http://localhost:8773/",
+    "keystone-api": curl_command.format("http://localhost:5000/"),
+    "glance-api": curl_command.format("http://localhost:9292/"),
+    "cinder-api": curl_command.format("http://localhost:8776/"),
+    "nova-api": curl_command.format("http://localhost:8774/"),
+    "heat-api": curl_command.format("http://localhost:8004/"),
+    "heat-api-cloudwatch": curl_command.format("http://localhost:8003/"),
+    "heat-api-cfn": curl_command.format("http://localhost:8000/"),
     "database": "mysqlslap --delimiter=\";\" "
     "--create=\"CREATE TABLE a (b int);INSERT INTO a VALUES (23)\" "
     "--query=\"SELECT * FROM a\" --concurrency=50 --iterations=20 "
@@ -62,10 +62,6 @@ class ScaleInfrastructureTest(ScaleTestFixture):
                                cls.api_failures,
                                cls.sentinel),
             SimultaneousBurnIn(smoke_test['heat-api-cfn'],
-                               cls.api_successes,
-                               cls.api_failures,
-                               cls.sentinel),
-            SimultaneousBurnIn(smoke_test['ec2-compat'],
                                cls.api_successes,
                                cls.api_failures,
                                cls.sentinel),
