@@ -25,14 +25,10 @@ class RabbitSimultaneousBurnIn(SimultaneousBurnIn):
                 for _ in range(queue.qsize()):
                     received_messages.add(queue.get(timeout=1).body)
 
-            print "{} ?= {}".format(str(messages), str(received_messages))
-
             for message in messages:
                 if message in received_messages:
                     with self.successes.get_lock():
                         self.successes.value += 1
-                        print "Rabbit success!!"
                 else:
                     with self.failures.get_lock():
                         self.failures.value += 1
-                        print "Rabbit failure!!"

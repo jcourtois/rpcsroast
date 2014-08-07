@@ -11,7 +11,7 @@ from rpcsroast.scale.infrastructure.rabbit.rabbit_health_check import \
     RabbitSimultaneousBurnIn
 
 #use ab instead of curl; it's for load testing
-curl_command = "curl -f {} -s &>/dev/null"
+curl_command = "curl -f {} -s >/dev/null"
 
 smoke_test = {
     "keystone-api": curl_command.format("http://localhost:5000/"),
@@ -24,7 +24,7 @@ smoke_test = {
     "database": "mysqlslap --delimiter=\";\" "
     "--create=\"CREATE TABLE a (b int);INSERT INTO a VALUES (23)\" "
     "--query=\"SELECT * FROM a\" --concurrency=50 --iterations=20 "
-    "--password=\"stack\" --detach=1"
+    "--password=\"stack\" --detach=1 >/dev/null"
 }
 
 
