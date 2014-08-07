@@ -11,7 +11,7 @@ from rpcsroast.scale.infrastructure.rabbit.rabbit_health_check import \
     RabbitSimultaneousBurnIn
 
 #use ab instead of curl; it's for load testing
-curl_command = "curl -f {} &>/dev/null"
+curl_command = "curl -f {} -s &>/dev/null"
 
 smoke_test = {
     "keystone-api": curl_command.format("http://localhost:5000/"),
