@@ -29,7 +29,6 @@ class SimultaneousBurnIn(multiprocessing.Process):
 
     def run(self):
         while not self.sentinel_event.is_set():
-            time.sleep(0.1)
             test_run = subprocess.Popen(self.burn_in_command, shell=True)
             test_run.wait()
             if test_run.returncode == 0:

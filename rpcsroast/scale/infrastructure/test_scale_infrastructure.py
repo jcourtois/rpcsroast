@@ -13,14 +13,14 @@ from rpcsroast.scale.infrastructure.rabbit.rabbit_health_check import \
 #use ab instead of curl; it's for load testing
 
 smoke_test = {
-    "keystone-api": "curl http://localhost:5000/",
-    "glance-api": "curl http://localhost:9292/",
-    "cinder-api": "curl http://localhost:8776/",
-    "nova-api": "curl http://localhost:8774/",
-    "heat-api": "curl http://localhost:8004/",
-    "heat-api-cloudwatch": "curl http://localhost:8003/",
-    "heat-api-cfn": "curl http://localhost:8000/",
-    "ec2-compat": "curl http://localhost:8773/",
+    "keystone-api": "curl -f http://localhost:5000/",
+    "glance-api": "curl -f http://localhost:9292/",
+    "cinder-api": "curl -f http://localhost:8776/",
+    "nova-api": "curl -f http://localhost:8774/",
+    "heat-api": "curl -f http://localhost:8004/",
+    "heat-api-cloudwatch": "curl -f http://localhost:8003/",
+    "heat-api-cfn": "curl -f http://localhost:8000/",
+    "ec2-compat": "curl -f http://localhost:8773/",
     "database": "mysqlslap --delimiter=\";\" "
     "--create=\"CREATE TABLE a (b int);INSERT INTO a VALUES (23)\" "
     "--query=\"SELECT * FROM a\" --concurrency=50 --iterations=20 "
