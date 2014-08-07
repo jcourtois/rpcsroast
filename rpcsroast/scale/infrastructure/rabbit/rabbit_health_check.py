@@ -16,7 +16,7 @@ class RabbitSimultaneousBurnIn(SimultaneousBurnIn):
                         str(random.uniform(0, 1)),
                         str(random.uniform(0, 1))]
             received_messages = set()
-            
+
             with connection.SimpleBuffer('test_queue3') as queue:
                 for message in messages:
                     queue.put(message)

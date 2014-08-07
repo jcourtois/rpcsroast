@@ -1,4 +1,5 @@
 import multiprocessing
+import time
 
 from rpcsroast.scale.fixtures import SimultaneousBurnIn, ScaleTestFixture
 from cafe.drivers.unittest.decorators import tags
@@ -9,13 +10,22 @@ from cafe.drivers.unittest.decorators import tags
 from rpcsroast.scale.infrastructure.rabbit.rabbit_health_check import \
     RabbitSimultaneousBurnIn
 
-KEYSTONE_SMOKE_TESTS_CMD = "curl -f http://localhost:5000/v2.0"
-NEUTRON_SMOKE_TESTS_CMD = "echo hey neutron"
-GLANCE_SMOKE_TESTS_CMD = "echo hey glance"
-NOVA_SMOKE_TESTS_CMD = "curl -f http://localhost:8774/v2.0"
-HEAT_SMOKE_TESTS_CMD = "echo hey heat"
-RABBIT_SMOKE_TESTS_CMD = "echo hey rabbit"
-GALERA_SMOKE_TESTS_CMD = "echo hey galera"
+#use ab instead of curl; it's for load testing
+
+smoke_test = {
+    "keystone-api": "ab -n 1000 -c 100 http://localhost:5000/",
+    "glance-api": "ab -n 1000 -c 100 http://localhost:9292/",
+    "cinder-api": "ab -n 1000 -c 100 http://localhost:8776/",
+    "nova-api": "ab -n 1000 -c 100 http://localhost:8774/",
+    "heat-api": "ab -n 1000 -c 100 http://localhost:8004/",
+    "heat-api-cloudwatch": "ab -n 1000 -c 100 http://localhost:8003/",
+    "heat-api-cfn": "ab -n 1000 -c 100 http://localhost:8000/",
+    "ec2-compat": "ab -n 1000 -c 100 http://localhost:8773/",
+    "database": "mysqlslap --delimiter=\";\" "
+    "--create=\"CREATE TABLE a (b int);INSERT INTO a VALUES (23)\" "
+    "--query=\"SELECT * FROM a\" --concurrency=50 --iterations=20 "
+    "--password=\"stack\" --detach=1"
+}
 
 
 class ScaleInfrastructureTest(ScaleTestFixture):
@@ -27,39 +37,51 @@ class ScaleInfrastructureTest(ScaleTestFixture):
         cls.api_successes = multiprocessing.Value('i', 0)
         cls.api_failures = multiprocessing.Value('i', 0)
         cls.burn_ins = [
-            SimultaneousBurnIn(KEYSTONE_SMOKE_TESTS_CMD,
+            SimultaneousBurnIn(smoke_test['keystone-api'],
                                cls.api_successes,
                                cls.api_failures,
                                cls.sentinel),
-            SimultaneousBurnIn(NEUTRON_SMOKE_TESTS_CMD,
+            SimultaneousBurnIn(smoke_test['glance-api'],
                                cls.api_successes,
                                cls.api_failures,
                                cls.sentinel),
-            SimultaneousBurnIn(GLANCE_SMOKE_TESTS_CMD,
+            SimultaneousBurnIn(smoke_test['cinder-api'],
                                cls.api_successes,
                                cls.api_failures,
                                cls.sentinel),
-            SimultaneousBurnIn(NOVA_SMOKE_TESTS_CMD,
+            SimultaneousBurnIn(smoke_test['nova-api'],
                                cls.api_successes,
                                cls.api_failures,
                                cls.sentinel),
-            SimultaneousBurnIn(HEAT_SMOKE_TESTS_CMD,
+            SimultaneousBurnIn(smoke_test['heat-api'],
+                               cls.api_successes,
+                               cls.api_failures,
+                               cls.sentinel),
+            SimultaneousBurnIn(smoke_test['heat-api-cloudwatch'],
+                               cls.api_successes,
+                               cls.api_failures,
+                               cls.sentinel),
+            SimultaneousBurnIn(smoke_test['heat-api-cfn'],
+                               cls.api_successes,
+                               cls.api_failures,
+                               cls.sentinel),
+            SimultaneousBurnIn(smoke_test['ec2-compat'],
+                               cls.api_successes,
+                               cls.api_failures,
+                               cls.sentinel),
+            SimultaneousBurnIn(smoke_test['database'],
                                cls.api_successes,
                                cls.api_failures,
                                cls.sentinel),
             RabbitSimultaneousBurnIn(cls.api_successes,
                                      cls.api_failures,
-                                     cls.sentinel),
-            SimultaneousBurnIn(GALERA_SMOKE_TESTS_CMD,
-                               cls.api_successes,
-                               cls.api_failures,
-                               cls.sentinel)]
+                                     cls.sentinel)]
 
     @tags(type='positive')
     def test_scale_infrastructure_up(self):
         for burn_in in self.burn_ins:
             burn_in.start()
-
+        time.sleep(3)
         #   find host
         #   write host file
         #   run rabbit playbook with new host file
