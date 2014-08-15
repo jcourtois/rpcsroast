@@ -1,16 +1,16 @@
-import multiprocessing
 import time
+import yaml
+import ansible.playbook
+import multiprocessing
+
 
 from rpcsroast.scale.fixtures import SimultaneousBurnIn, ScaleTestFixture
 from cafe.drivers.unittest.decorators import tags
 
 
-# note that we want test commands here that will return non-zero exit codes
-# if anything fails.
 from rpcsroast.scale.infrastructure.rabbit.rabbit_health_check import \
     RabbitSimultaneousBurnIn
 
-#use ab instead of curl; it's for load testing
 curl_command = "curl -f {} -s >/dev/null"
 
 smoke_test = {
@@ -21,6 +21,7 @@ smoke_test = {
     "heat-api": curl_command.format("http://localhost:8004/"),
     "heat-api-cloudwatch": curl_command.format("http://localhost:8003/"),
     "heat-api-cfn": curl_command.format("http://localhost:8000/"),
+    "neutron-api": curl_command.format("http://localhost:9696/"),
     "database": "mysqlslap --delimiter=\";\" "
     "--create=\"CREATE TABLE a (b int);INSERT INTO a VALUES (23)\" "
     "--query=\"SELECT * FROM a\" --concurrency=50 --iterations=20 "
@@ -65,6 +66,10 @@ class ScaleInfrastructureTest(ScaleTestFixture):
                                cls.api_successes,
                                cls.api_failures,
                                cls.sentinel),
+            SimultaneousBurnIn(smoke_test['neutron-api'],
+                               cls.api_successes,
+                               cls.api_failures,
+                               cls.sentinel),
             SimultaneousBurnIn(smoke_test['database'],
                                cls.api_successes,
                                cls.api_failures,
@@ -74,34 +79,37 @@ class ScaleInfrastructureTest(ScaleTestFixture):
                                      cls.sentinel)]
 
     @tags(type='positive')
-    def test_scale_infrastructure_up(self):
+    def test_scale_infrastructure_up_and_down(self):
         for burn_in in self.burn_ins:
             burn_in.start()
-        time.sleep(3)
-        #   find host
-        #   write host file
-        #   run rabbit playbook with new host file
-        #   add new rabbitmq container ip to load balancer
 
-        # ask load balancer about service on IP
-        #   validate new rabbit server:
-        #   -create message on message queue
-        #   -submit
-        #   -validate message sent
-        #   -validate message queued
-        #   -validate message consumed
+        with open('rpc_user_config.yml', 'r') as stream:
+            contents = yaml.load(stream.read())
+
+        contents['infra_hosts']['scale1'] = {'ip': '10.0.0.10'}
+        contents['infra_hosts']['scale2'] = {'ip': '10.0.0.11'}
+
+        with open('upscale_infra_config.yml', 'w') as stream:
+            stream.write(yaml.dump(contents))
+
+        scale_up_playbook = ansible.playbook.PlayBook(
+            playbook="playbooks/infrastructure/"
+                     "all-the-infrastructure-things.yml",
+            extra_vars="@upscale_infra_config.yml")
+        scale_up_playbook.run()
+
+        # validate load balancer sees new hosts
+        # validate new hosts
+
+        scale_down_playbook = ansible.playbook.PlayBook(
+            playbook="playbooks/infrastructure/"
+                     "all-the-infrastructure-things.yml",
+            extra_vars="@rpc_user_config.yml")
+        scale_down_playbook.run()
+        # remove created config file
+        # (delete new entry from inventory??)
         self.sentinel.set()
         for burn_in in self.burn_ins:
             burn_in.join()
         print "\nSuccesses: {}\nFailures: {}".format(self.api_successes.value,
                                                      self.api_failures.value)
-
-
-    @tags(type='positive')
-    def test_scale_infrastructure_down(self):
-        pass
-        # while pinging rabbit and tracking success-to-failure ratio:
-
-        # select new rabbitmq container from cluster
-        # run destroy-container playbook on that
-        # remove ip from load balancer pool
